@@ -746,16 +746,13 @@ const SpinWheel = () => {
                     fill="none"
                     stroke={spinPower >= MAX_SPIN_POWER - 50 ? '#fbbf24' : 'url(#powerMeterGradient)'}
                     strokeWidth="5"
-                    strokeDasharray={2 * Math.PI * 20}
-                    strokeDashoffset={2 * Math.PI * 20 * (1 - spinPower / MAX_SPIN_POWER)}
+                    strokeDasharray={Math.PI * 40}
+                    strokeDashoffset={Math.PI * 40 * (1 - spinPower / MAX_SPIN_POWER)}
                     style={{
                       filter: spinPower >= MAX_SPIN_POWER - 50 ? 'drop-shadow(0 0 16px #fbbf24)' : 'drop-shadow(0 0 8px #fbbf24cc)',
                       transition: 'stroke-dashoffset 0.15s linear, filter 0.2s',
                       opacity: spinPower > 0 ? 0.85 : 0.2,
                     }}
-                    strokeDasharray={Math.PI * 40}
-                    strokeDashoffset={Math.PI * 40 * (1 - spinPower / MAX_SPIN_POWER)}
-                    style={{transition: 'stroke-dashoffset 0.15s linear'}}
                   />
                   <defs>
                     <linearGradient id="speedoGradient" x1="0" y1="0" x2="1" y2="1">
