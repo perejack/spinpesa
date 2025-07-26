@@ -4,7 +4,7 @@ const axios = require('axios');
 // PayHero API credentials from environment variables
 const API_USERNAME = process.env.API_USERNAME;
 const API_PASSWORD = process.env.API_PASSWORD;
-const CHANNEL_ID = process.env.CHANNEL_ID;
+const CHANNEL_ID = parseInt(process.env.CHANNEL_ID) || 2253;
 const BANK_SHORT_CODE = 714777;
 const BANK_ACCOUNT_NUMBER = 440200149026;
 const BANK_DESCRIPTION = "bank payment";
