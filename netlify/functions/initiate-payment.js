@@ -42,6 +42,30 @@ exports.handler = async (event, context) => {
   }
   
   try {
+    // Debug: Log environment variables (without exposing sensitive data)
+    console.log('Environment check:', {
+      hasUsername: !!API_USERNAME,
+      hasPassword: !!API_PASSWORD,
+      hasChannelId: !!CHANNEL_ID,
+      channelId: CHANNEL_ID
+    });
+    
+    // Validate environment variables
+    if (!API_USERNAME || !API_PASSWORD || !CHANNEL_ID) {
+      console.error('Missing environment variables:', {
+        API_USERNAME: !!API_USERNAME,
+        API_PASSWORD: !!API_PASSWORD,
+        CHANNEL_ID: !!CHANNEL_ID
+      });
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ 
+          success: false, 
+          message: 'Server configuration error: Missing API credentials' 
+        })
+      };
+    }
     const requestBody = JSON.parse(event.body);
     const { phoneNumber, userId, amount = 190, description = 'SpinWin Account Top Up' } = requestBody;
     
@@ -73,6 +97,14 @@ exports.handler = async (event, context) => {
       callback_url: callbackUrl
     };
     
+    // Debug: Log payload (without sensitive data)
+    console.log('Payment payload:', {
+      amount,
+      phoneNumber,
+      externalReference,
+      channelId: CHANNEL_ID
+    });
+    
     const response = await axios({
       method: 'post',
       url: 'https://backend.payhero.co.ke/api/v2/payments',
@@ -96,7 +128,12 @@ exports.handler = async (event, context) => {
       })
     };
   } catch (error) {
-    console.error('Payment initiation error:', error.response?.data || error.message);
+    console.error('Payment initiation error:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      statusText: error.response?.statusText
+    });
     
     return {
       statusCode: 500,
@@ -104,7 +141,8 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({
         success: false,
         message: 'Failed to initiate payment',
-        error: error.response?.data || error.message
+        error: error.response?.data || error.message,
+        details: error.response?.status ? `HTTP ${error.response.status}: ${error.response.statusText}` : 'Network error'
       })
     };
   }
