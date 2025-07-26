@@ -1,9 +1,72 @@
+/* Import stunning withdrawal animations */
+@import './styles/withdrawal-animations.css';
+
+/* Mobile-first root layout */
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100vw;
+  min-height: 100vh;
+  max-width: 100vw;
+  margin: 0;
+  padding: 1.25rem;
   text-align: center;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  overflow-x: hidden;
+  font-size: 1rem;
 }
+
+@media (max-width: 640px) {
+  #root {
+    padding: 0.5rem;
+    font-size: 1.08rem;
+  }
+}
+
+html, body {
+  width: 100vw;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  background: #0f172a;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Prevent horizontal scroll */
+body {
+  overflow-x: hidden;
+}
+
+/* Subtle shadow for app container */
+#root {
+  box-shadow: 0 2px 24px 0 rgba(16,185,129,0.10), 0 1.5px 6px 0 rgba(0,0,0,0.10);
+}
+
+/* Responsive card styles */
+.card {
+  padding: 2em;
+  border-radius: 1.25em;
+  background: rgba(30,41,59,0.95);
+  box-shadow: 0 4px 16px rgba(16,185,129,0.08);
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: 1em;
+    border-radius: 1em;
+  }
+}
+
+/* Utility: prevent tap highlight */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
 
 .logo {
   height: 6em;

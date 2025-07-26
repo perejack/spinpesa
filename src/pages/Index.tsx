@@ -42,26 +42,25 @@ const Index = () => {
             <MinimalHeader />
           </div>
           
-          {/* Home Withdrawal - Prominent on mobile */}
-          <div className="px-3 mb-4">
-            <HomeWithdrawal />
-          </div>
-          
           {/* Mobile-First Content Layout */}
           <div className="flex-1 flex flex-col lg:flex-row lg:items-start lg:justify-center gap-4 lg:gap-6 px-3 pb-6">
-            {/* Game Stats - Compact mobile card */}
-            <div className="w-full lg:w-80 order-1">
-              <GameStats />
-            </div>
-            
             {/* Spin Wheel - Center focus on mobile */}
-            <div className="w-full lg:flex-1 flex justify-center items-center order-2 py-4">
+            <div className="w-full lg:flex-1 flex justify-center items-center order-2 lg:order-1 py-4">
               <SpinWheel />
             </div>
+
+            {/* Right Column: Game Stats and Withdrawal */}
+            <div className="w-full lg:w-80 order-1 lg:order-2 space-y-4">
+              {/* Game Stats - Compact mobile card */}
+              <GameStats />
+              
+              {/* Home Withdrawal - Prominent on mobile */}
+              <HomeWithdrawal />
+            </div>
             
-            {/* Payment Modal - Quick access on mobile */}
-            <div className="w-full lg:w-80 order-3">
-              <PaymentModal />
+            {/* Empty div for spacing on large screens, if needed */}
+            <div className="w-full lg:w-80 order-3 lg:hidden">
+              {/* This space was previously for PaymentModal */}
             </div>
           </div>
         </div>

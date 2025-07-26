@@ -4,6 +4,8 @@ import SpeedometerOverlay from './SpeedometerOverlay';
 import { Star, Gift, Trophy, Award, Zap } from 'lucide-react';
 import FreeSpinsModal from './FreeSpinsModal';
 import LoseModal from './LoseModal';
+import FreeSpinsIndicator from './FreeSpinsIndicator';
+import OutOfSpinsModal from './OutOfSpinsModal';
 import { soundManager } from '../utils/soundUtils';
 
 const MAX_SPIN_POWER = 2000; // ms, 2 seconds for max power
@@ -18,6 +20,14 @@ const SpinWheel = () => {
   const [showCelebration, setShowCelebration] = useState(false);
   const [showFreeSpinsModal, setShowFreeSpinsModal] = useState(false);
   const [showLoseModal, setShowLoseModal] = useState(false);
+  const [showOutOfSpinsModal, setShowOutOfSpinsModal] = useState(false);
+
+  // Automatically prompt to deposit when user has no spins and insufficient funds
+  React.useEffect(() => {
+    if (!isAnimating && state.freeSpins === 0 && state.balance < 50) {
+      setShowOutOfSpinsModal(true);
+    }
+  }, [isAnimating, state.freeSpins, state.balance]);
 
   // Long-press spin logic
   const [spinPower, setSpinPower] = useState(0); // ms
@@ -30,7 +40,16 @@ const SpinWheel = () => {
 
 
   function handleSpinPressStart(e: React.MouseEvent | React.TouchEvent) {
-    if (!canSpin() || isAnimating) return;
+    if (isAnimating) return;
+    if (!canSpin()) {
+      // Prevent event propagation and show modal
+      e.preventDefault();
+      e.stopPropagation();
+      setShowOutOfSpinsModal(true);
+      soundManager.play('click');
+      return;
+    }
+    // Only allow long-press logic if spinning is allowed
     soundManager.play('click');
     setSpinPower(0);
     setSpinPowerStart(Date.now());
@@ -57,7 +76,13 @@ const SpinWheel = () => {
     animateSpeed();
   }
   function handleSpinPressEnd(e: React.MouseEvent | React.TouchEvent) {
-    if (!canSpin() || isAnimating) return;
+    // If user can't spin, don't process the end event to avoid interfering with modal
+    if (!canSpin()) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    if (isAnimating) return;
     if (spinPowerTimer.current) clearInterval(spinPowerTimer.current);
     const held = spinPowerStart ? Math.min(Date.now() - spinPowerStart, MAX_SPIN_POWER) : 0;
     setSpinPower(held);
@@ -76,9 +101,12 @@ const SpinWheel = () => {
     setTimeout(() => setSpinPower(0), 300);
   }
   function handleSpinPressCancel() {
-    if (spinPowerTimer.current) clearInterval(spinPowerTimer.current);
-    setSpinPower(0);
-    setSpinPowerStart(null);
+    // Only clear timers if user can actually spin
+    if (canSpin()) {
+      if (spinPowerTimer.current) clearInterval(spinPowerTimer.current);
+      setSpinPower(0);
+      setSpinPowerStart(null);
+    }
   }
 
   // Updated segments: 12 segments, max win 150, equal win/lose chance
@@ -101,8 +129,9 @@ const SpinWheel = () => {
   const spinWheel = async (powerOverride?: number) => {
     if (!canSpin() || isAnimating) return;
 
+    // If the user has no free spins and not enough balance, show the out of spins modal directly.
     if (state.freeSpins === 0 && state.balance < 50) {
-      setShowFreeSpinsModal(true);
+      setShowOutOfSpinsModal(true);
       soundManager.play('click');
       return;
     }
@@ -173,10 +202,18 @@ const SpinWheel = () => {
     }
 
     // 2. FIND A TARGET SEGMENT THAT MATCHES THE WIN AMOUNT
-    const possibleSegments = segments
+    let possibleSegments = segments
       .map((seg, i) => ({ ...seg, index: i }))
       .filter(seg => seg.value === winAmount);
-    
+
+    // Fallback: if no matching segment, default to a lose segment (value 0)
+    if (possibleSegments.length === 0) {
+      winAmount = 0;
+      possibleSegments = segments
+        .map((seg, i) => ({ ...seg, index: i }))
+        .filter(seg => seg.value === 0);
+    }
+
     const targetSegment = possibleSegments[Math.floor(Math.random() * possibleSegments.length)];
 
     // 3. CALCULATE THE EXACT ROTATION TO LAND ON THE TARGET SEGMENT
@@ -190,17 +227,21 @@ const SpinWheel = () => {
     const currentAngle = ((rotation % 360) + 360) % 360;
     const angleDelta = (desiredFinalMod - currentAngle + 360) % 360;
     const extraSpins = Math.floor(Math.random() * 3) + 4; // 4-6 full spins
-    const finalRotation = 360 * extraSpins + angleDelta;
+    // Apply absolute rotation so we end exactly on the target with a single animation
+    const finalRotation = rotation + 360 * extraSpins + angleDelta;
     setRotation(finalRotation);
     soundManager.play('spin');
     await new Promise((resolve) => setTimeout(resolve, spinDuration * 1000));
-    setRotation(desiredFinalMod);
     // Add a burst or glow effect if spun at max power
     if (typeof powerOverride === 'number' && powerOverride >= MAX_SPIN_POWER - 50) {
       // Add a one-time burst effect (handled in CSS or a state)
       setShowCelebration(true);
       setTimeout(() => setShowCelebration(false), 600);
     }
+
+    // This is the state before the spin started, so check if it was 1.
+    const wasLastFreeSpin = isFreeSpin && state.freeSpins === 1;
+
     setTimeout(() => {
       setIsAnimating(false);
 
@@ -228,7 +269,7 @@ const SpinWheel = () => {
           },
         });
       }
-    }, 5000);
+    }, 800);
   };
 
   const getPrizeDescription = (segment: typeof segments[0]) => {
@@ -250,6 +291,12 @@ const SpinWheel = () => {
     soundManager.play('click');
   };
 
+  const handleDepositFromOutOfSpinsModal = () => {
+    setShowOutOfSpinsModal(false);
+    dispatch({ type: 'TOGGLE_PAYMENT_MODAL' });
+    soundManager.play('click');
+  };
+
   return (
     <div className="flex flex-col items-center relative w-full max-w-sm mx-auto">
       <FreeSpinsModal
@@ -261,11 +308,20 @@ const SpinWheel = () => {
         onDeposit={handleDepositFromModal}
       />
 
+      <OutOfSpinsModal
+        isOpen={showOutOfSpinsModal}
+        onClose={() => setShowOutOfSpinsModal(false)}
+        onDeposit={handleDepositFromOutOfSpinsModal}
+      />
+
       <LoseModal
         isOpen={showLoseModal}
         onClose={() => {
           setShowLoseModal(false);
           soundManager.play('click');
+          if (state.freeSpins === 0 && state.balance < 50) {
+            setShowOutOfSpinsModal(true);
+          }
         }}
       />
 
@@ -538,6 +594,11 @@ const SpinWheel = () => {
         </div>
       </div>
 
+      {/* Free Spins Indicator */}
+      {state.freeSpins > 0 && !isAnimating && (
+        <FreeSpinsIndicator count={state.freeSpins} />
+      )}
+
       {/* Enhanced Mobile Spin Button with Sound */}
       <button
         onMouseDown={handleSpinPressStart}
@@ -546,11 +607,11 @@ const SpinWheel = () => {
         onMouseLeave={handleSpinPressCancel}
         onTouchEnd={handleSpinPressEnd}
         onTouchCancel={handleSpinPressCancel}
-        disabled={!canSpin() || isAnimating}
+        disabled={isAnimating}
         className={`px-6 sm:px-8 py-4 sm:py-5 rounded-3xl font-black text-base sm:text-lg md:text-xl transition-all duration-300 transform relative overflow-hidden shadow-2xl w-full max-w-xs ${
-          canSpin() && !isAnimating
-            ? `bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white hover:scale-105 active:scale-95 animate-pulse ${showWow ? 'ring-4 ring-fuchsia-400 animate-shockwave' : ''}`
-            : 'bg-gray-500/50 text-gray-300 cursor-not-allowed'
+           !isAnimating
+             ? `bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white hover:scale-105 active:scale-95 animate-pulse ${showWow ? 'ring-4 ring-fuchsia-400 animate-shockwave' : ''}`
+             : 'bg-gray-500/50 text-gray-300 cursor-not-allowed'
         }`}
         aria-label="Spin the wheel"
         tabIndex={0}
