@@ -25,19 +25,20 @@ interface TopUpModalProps {
 
 const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose }) => {
   const { state, dispatch } = useGame();
-  const [selectedAmount, setSelectedAmount] = useState(100);
+  const [selectedAmount, setSelectedAmount] = useState(10);
   const [phoneNumber, setPhoneNumber] = useState(state.phoneNumber || '');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [animateCoins, setAnimateCoins] = useState(false);
   const [showPhoneInput, setShowPhoneInput] = useState(false);
+  const [spinBalance, setSpinBalance] = useState<number|null>(null);
   const phoneInputRef = useRef<HTMLInputElement>(null);
 
   const topUpAmounts = [
-    { amount: 50, bonus: 0, popular: false },
-    { amount: 100, bonus: 10, popular: true },
-    { amount: 200, bonus: 25, popular: false },
-    { amount: 500, bonus: 75, popular: false },
+    { amount: 10, bonus: 0, popular: false },
+    { amount: 50, bonus: 10, popular: true },
+    { amount: 100, bonus: 25, popular: false },
+    { amount: 200, bonus: 75, popular: false },
     { amount: 1000, bonus: 200, popular: false },
   ];
 
@@ -47,6 +48,19 @@ const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose }) => {
       soundManager.play('click');
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    async function fetchSpins() {
+      if (phoneNumber && phoneNumber.length >= 10) {
+        const { getSpinBalance } = await import('../utils/supabaseClient');
+        const spins = await getSpinBalance(phoneNumber);
+        setSpinBalance(spins);
+      } else {
+        setSpinBalance(null);
+      }
+    }
+    fetchSpins();
+  }, [phoneNumber, isOpen]);
 
   const handleAmountSelect = (amount: number) => {
     setSelectedAmount(amount);
@@ -62,7 +76,7 @@ const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose }) => {
           behavior: 'smooth', 
           block: 'center' 
         });
-      }, 500);
+      }, 100);
     }
   };
 
@@ -100,7 +114,7 @@ const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md animate-fade-in px-3 py-4 sm:px-6 sm:py-6">
+    <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/70 backdrop-blur-md animate-fade-in px-3 py-4 sm:px-6 sm:py-6">
       <div className="relative w-full max-w-sm sm:max-w-md mx-auto animate-slide-up">
         {/* Mobile-first optimization */}
         {/* Floating particles background */}
@@ -120,16 +134,16 @@ const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Mobile-optimized main modal container */}
-        <div className="relative bg-gradient-to-br from-slate-900/95 via-purple-900/95 to-slate-900/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-2xl border border-purple-500/20 overflow-hidden max-h-[92vh] overflow-y-auto">
+        <div className="relative bg-gradient-to-br from-slate-900/95 via-purple-900/95 to-slate-900/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-2xl border border-purple-100/20 overflow-hidden max-h-[92vh] overflow-y-auto">
           {/* Mobile scroll indicator */}
-          <div className="sticky top-0 w-full h-1 bg-gradient-to-r from-purple-500/20 via-purple-500/40 to-purple-500/20 z-10"></div>
+          <div className="sticky top-0 w-full h-1 bg-gradient-to-r from-purple-100/20 via-purple-100/40 to-purple-100/20 z-10"></div>
           {/* Animated gradient border */}
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-purple-500/20 rounded-3xl blur-xl animate-pulse"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-100/20 via-pink-100/20 to-purple-100/20 rounded-3xl blur-xl animate-pulse"></div>
           
           {/* Enhanced mobile close button */}
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 w-12 h-12 sm:w-10 sm:h-10 bg-slate-700/80 hover:bg-slate-600/80 active:bg-slate-500/80 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 touch-manipulation"
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 w-12 h-12 sm:w-10 sm:h-10 bg-slate-700/80 hover:bg-slate-600/80 active:bg-slate-100/80 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 touch-manipulation"
             style={{ touchAction: 'manipulation' }}
           >
             <X size={22} className="text-white sm:w-5 sm:h-5" />
@@ -149,7 +163,7 @@ const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose }) => {
           <div className="relative p-4 sm:p-6 space-y-4 sm:space-y-6 pb-6 sm:pb-8">
             {/* Mobile-optimized header with animated credit card */}
             <div className="text-center space-y-3 sm:space-y-4 pt-2">
-              <div className="relative mx-auto w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-2xl animate-float">
+              <div className="relative mx-auto w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-2xl animate-float">
                 <CreditCard size={28} className="text-white sm:w-8 sm:h-8" />
                 {animateCoins && (
                   <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-5 h-5 sm:w-6 sm:h-6 bg-yellow-400 rounded-full animate-bounce">
@@ -165,10 +179,10 @@ const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose }) => {
             </div>
 
             {/* Mobile-optimized current balance display */}
-            <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-purple-500/30 hover-glow">
+            <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-purple-100/30 hover-glow">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-500/20 rounded-lg sm:rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100/20 rounded-lg sm:rounded-xl flex items-center justify-center">
                     <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
                   </div>
                   <div>
@@ -199,8 +213,8 @@ const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose }) => {
                     onClick={() => handleAmountSelect(option.amount)}
                     className={`relative p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 touch-manipulation ${
                       selectedAmount === option.amount
-                        ? 'border-purple-500 bg-purple-500/20 shadow-lg shadow-purple-500/25 scale-[1.02]'
-                        : 'border-slate-600 bg-slate-700/30 hover:border-purple-400 hover:bg-purple-500/10 active:scale-95'
+                        ? 'border-purple-100 bg-purple-100/20 shadow-lg shadow-purple-100/25 scale-[1.02]'
+                        : 'border-slate-600 bg-slate-700/30 hover:border-purple-400 hover:bg-purple-100/10 active:scale-95'
                     }`}
                     style={{ touchAction: 'manipulation', minHeight: '60px' }}
                   >
@@ -241,7 +255,7 @@ const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose }) => {
                 {/* Animated separator with glow effect */}
                 <div className="relative my-4 sm:my-6">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gradient-to-r from-transparent via-purple-500/50 to-transparent animate-pulse"></div>
+                    <div className="w-full border-t border-gradient-to-r from-transparent via-purple-100/10 to-transparent animate-pulse"></div>
                   </div>
                   <div className="relative flex justify-center">
                     <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-3 py-1 rounded-full animate-glow">
@@ -255,9 +269,9 @@ const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose }) => {
                 </div>
 
                 {/* Enhanced phone input with floating label effect */}
-                <div className="relative transform transition-all duration-500 animate-fade-in">
+                <div className="relative transform transition-all duration-100 animate-fade-in">
                   <label className="text-white font-bold flex items-center gap-2 text-sm sm:text-base mb-2 animate-slide-up">
-                    <div className="w-6 h-6 bg-purple-500/20 rounded-lg flex items-center justify-center animate-pulse">
+                    <div className="w-6 h-6 bg-purple-100/20 rounded-lg flex items-center justify-center animate-pulse">
                       <Smartphone size={14} className="text-purple-400" />
                     </div>
                     M-Pesa Phone Number
@@ -269,7 +283,7 @@ const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose }) => {
                   
                   <div className="relative group">
                     {/* Glowing border effect */}
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg sm:rounded-xl blur opacity-30 group-hover:opacity-50 transition duration-300 animate-pulse"></div>
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg sm:rounded-xl blur opacity-30 group-hover:opacity-10 transition duration-300 animate-pulse"></div>
                     
                     <div className="relative">
                       <input
@@ -277,71 +291,46 @@ const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose }) => {
                         type="tel"
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
-                        placeholder="0712345678"
-                        className="w-full bg-slate-800/90 border border-slate-600 rounded-lg sm:rounded-xl px-3 py-4 sm:px-4 sm:py-4 text-white placeholder-slate-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all duration-300 text-base touch-manipulation backdrop-blur-sm"
-                        style={{ fontSize: '16px', touchAction: 'manipulation' }}
-                        inputMode="tel"
-                        autoComplete="tel"
-                      />
-                      
-                      {/* Enhanced M-Pesa indicator */}
-                      <div className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2">
-                        <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-r from-green-600 to-green-500 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg animate-pulse">
-                          <span className="text-white text-sm font-black">M</span>
-                        </div>
-                      </div>
-                      
-                      {/* Input validation indicator */}
-                      {phoneNumber.length >= 10 && (
-                        <div className="absolute right-12 sm:right-14 top-1/2 transform -translate-y-1/2">
-                          <CheckCircle size={20} className="text-green-400 animate-bounce" />
-                        </div>
-                      )}
+                        disabled={isProcessing}
+                        className={`w-full font-black py-4 sm:py-5 rounded-lg sm:rounded-xl transition-all duration-200 transform relative overflow-hidden text-base sm:text-lg touch-manipulation ${
+                          phoneNumber && phoneNumber.length >= 10 && !isProcessing
+                            ? 'bg-gradient-to-r from-purple-600 via-purple-100 to-purple-600 hover:from-purple-700 hover:via-purple-600 hover:to-purple-700 text-white active:scale-95 shadow-xl hover:shadow-2xl btn-withdraw'
+                            : 'bg-slate-600/10 text-slate-400 cursor-not-allowed'
+                        }`}
+                        style={{ touchAction: 'manipulation', minHeight: '56px' }}
+                        maxLength={10}
+                        minLength={10}
+                        pattern="[0-9]{10}"
+                        placeholder="07xxxxxxxx"
+                      >
+                        {/* Button shine effect */}
+                        {phoneNumber && phoneNumber.length >= 10 && !isProcessing && (
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-pulse"></div>
+                        )}
+                        
+                        <span className="relative flex items-center justify-center gap-3">
+                          {isProcessing ? (
+                            <>
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                              Processing Payment...
+                            </>
+                          ) : phoneNumber && phoneNumber.length >= 10 ? (
+                            <>
+                              <CreditCard className="w-5 h-5" />
+                              Pay KSH {selectedAmount} via M-Pesa
+                              <ArrowRight className="w-5 h-5" />
+                            </>
+                          ) : (
+                            <>
+                              <Smartphone className="w-5 h-5" />
+                              Enter Valid Phone Number
+                            </>
+                          )}
+                        </span>
+                      </input>
                     </div>
                   </div>
-                  
-                  {/* Helper text with animation */}
-                  <div className="mt-2 flex items-center gap-2 text-xs text-purple-300 animate-fade-in">
-                    <Clock size={12} className="animate-pulse" />
-                    <span>We'll send you a payment prompt instantly</span>
-                  </div>
                 </div>
-              </div>
-            )}
-
-            {/* Mobile-optimized action button - only show when phone input is visible */}
-            {showPhoneInput && (
-            <button
-              onClick={handleTopUp}
-              disabled={!phoneNumber || phoneNumber.length < 10 || isProcessing}
-              className={`w-full font-black py-4 sm:py-5 rounded-lg sm:rounded-xl transition-all duration-200 transform relative overflow-hidden text-base sm:text-lg touch-manipulation ${
-                phoneNumber && phoneNumber.length >= 10 && !isProcessing
-                  ? 'bg-gradient-to-r from-purple-600 via-purple-500 to-purple-600 hover:from-purple-700 hover:via-purple-600 hover:to-purple-700 text-white active:scale-95 shadow-xl hover:shadow-2xl btn-withdraw'
-                  : 'bg-slate-600/50 text-slate-400 cursor-not-allowed'
-              }`}
-              style={{ touchAction: 'manipulation', minHeight: '56px' }}
-            >
-              {/* Button shine effect */}
-              {phoneNumber && phoneNumber.length >= 10 && !isProcessing && (
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-pulse"></div>
-              )}
-              
-              <span className="relative flex items-center justify-center gap-3">
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Processing Payment...
-                  </>
-                ) : phoneNumber && phoneNumber.length >= 10 ? (
-                  <>
-                    <CreditCard className="w-5 h-5" />
-                    Pay KSH {selectedAmount} via M-Pesa
-                    <ArrowRight className="w-5 h-5" />
-                  </>
-                ) : (
-                  <>
-                    <Smartphone className="w-5 h-5" />
-                    Enter Valid Phone Number
                   </>
                 )}
               </span>
@@ -349,7 +338,7 @@ const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose }) => {
             )}
 
             {/* Mobile-optimized footer info */}
-            <div className="bg-slate-800/50 rounded-lg sm:rounded-xl p-2 sm:p-3 border border-slate-600/30">
+            <div className="bg-slate-800/10 rounded-lg sm:rounded-xl p-2 sm:p-3 border border-slate-600/30">
               <div className="flex items-center gap-2 text-slate-300 text-xs sm:text-sm">
                 <Shield size={14} className="text-purple-400 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="text-center w-full sm:text-left">Secure • Instant • No fees</span>
@@ -357,7 +346,7 @@ const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose }) => {
             </div>
 
             {/* Mobile-optimized bonus info */}
-            <div className="bg-gradient-to-r from-yellow-600/20 to-orange-600/20 rounded-lg sm:rounded-xl p-2 sm:p-3 border border-yellow-500/30">
+            <div className="bg-gradient-to-r from-yellow-600/20 to-orange-600/20 rounded-lg sm:rounded-xl p-2 sm:p-3 border border-yellow-100/30">
               <div className="flex items-center gap-2 text-yellow-200 text-xs sm:text-sm">
                 <Sparkles size={14} className="text-yellow-400 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="text-center w-full sm:text-left">Bonus credits on larger top-ups!</span>

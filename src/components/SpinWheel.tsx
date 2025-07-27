@@ -24,7 +24,7 @@ const SpinWheel = () => {
 
   // Automatically prompt to deposit when user has no spins and insufficient funds
   React.useEffect(() => {
-    if (!isAnimating && state.freeSpins === 0 && state.balance < 50) {
+    if (!isAnimating && state.freeSpins === 0 && state.balance < 10) {
       setShowOutOfSpinsModal(true);
     }
   }, [isAnimating, state.freeSpins, state.balance]);
@@ -128,12 +128,29 @@ const SpinWheel = () => {
 
   const spinWheel = async (powerOverride?: number) => {
     if (!canSpin() || isAnimating) return;
+    const phoneNumber = state.phoneNumber;
 
     // If the user has no free spins and not enough balance, show the out of spins modal directly.
-    if (state.freeSpins === 0 && state.balance < 50) {
+    if (state.freeSpins === 0 && state.balance < 10) {
       setShowOutOfSpinsModal(true);
       soundManager.play('click');
       return;
+    }
+
+    // Supabase paid spin deduction
+    let paidSpinAllowed = true;
+    let supabaseSpinBalance = null;
+    if (state.freeSpins === 0 && phoneNumber && phoneNumber.length >= 10) {
+      const { useSpin, getSpinBalance } = await import('../utils/supabaseClient');
+      paidSpinAllowed = await useSpin(phoneNumber);
+      if (!paidSpinAllowed) {
+        setShowOutOfSpinsModal(true);
+        setIsAnimating(false);
+        soundManager.play('click');
+        return;
+      }
+      supabaseSpinBalance = await getSpinBalance(phoneNumber);
+      // Optionally, dispatch or update UI state with new spin balance here
     }
 
     setIsAnimating(true);
@@ -152,7 +169,7 @@ const SpinWheel = () => {
     if (isFreeSpin) {
       dispatch({ type: 'USE_FREE_SPIN' });
     } else {
-      dispatch({ type: 'SUBTRACT_BALANCE', payload: 50 });
+      dispatch({ type: 'SUBTRACT_BALANCE', payload: 10 });
     }
 
     // 1. DETERMINE THE WIN AMOUNT FIRST
@@ -319,7 +336,7 @@ const SpinWheel = () => {
         onClose={() => {
           setShowLoseModal(false);
           soundManager.play('click');
-          if (state.freeSpins === 0 && state.balance < 50) {
+          if (state.freeSpins === 0 && state.balance < 10) {
             setShowOutOfSpinsModal(true);
           }
         }}
@@ -804,10 +821,10 @@ const SpinWheel = () => {
               <Gift className="w-5 h-5 sm:w-6 sm:h-6" />
               SPIN FREE!
             </span>
-          ) : state.balance >= 50 ? (
+          ) : state.balance >= 10 ? (
             <span className="flex items-center justify-center gap-3">
               <Zap className="w-5 h-5 sm:w-6 sm:h-6" />
-              SPIN (50 KSH)
+              SPIN (10 KSH)
             </span>
           ) : (
             <span className="flex items-center justify-center gap-3">
