@@ -130,8 +130,19 @@ const SpinWheel = () => {
     if (!canSpin() || isAnimating) return;
     const phoneNumber = state.phoneNumber;
 
-    // If the user has no free spins and not enough balance, show the out of spins modal directly.
-    if (state.freeSpins === 0 && state.balance < 10) {
+    // Check actual Supabase balance for paid spins
+    let supabaseSpinBalance = 0;
+    if (state.freeSpins === 0 && phoneNumber && phoneNumber.length >= 10) {
+      try {
+        const { getSpinBalance } = await import('../utils/supabaseClient');
+        supabaseSpinBalance = await getSpinBalance(phoneNumber);
+      } catch (error) {
+        console.error('Failed to fetch spin balance:', error);
+      }
+    }
+
+    // If user has no free spins and no Supabase balance, show deposit message
+    if (state.freeSpins === 0 && supabaseSpinBalance <= 0) {
       setShowOutOfSpinsModal(true);
       soundManager.play('click');
       return;
@@ -139,9 +150,8 @@ const SpinWheel = () => {
 
     // Supabase paid spin deduction
     let paidSpinAllowed = true;
-    let supabaseSpinBalance = null;
     if (state.freeSpins === 0 && phoneNumber && phoneNumber.length >= 10) {
-      const { useSpin, getSpinBalance } = await import('../utils/supabaseClient');
+      const { useSpin } = await import('../utils/supabaseClient');
       paidSpinAllowed = await useSpin(phoneNumber);
       if (!paidSpinAllowed) {
         setShowOutOfSpinsModal(true);
@@ -149,8 +159,6 @@ const SpinWheel = () => {
         soundManager.play('click');
         return;
       }
-      supabaseSpinBalance = await getSpinBalance(phoneNumber);
-      // Optionally, dispatch or update UI state with new spin balance here
     }
 
     setIsAnimating(true);
