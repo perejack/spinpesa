@@ -24,7 +24,17 @@ exports.handler = async (event, context) => {
     console.log('Payment callback received:', JSON.stringify(callbackData, null, 2));
 
     const response = callbackData.response || {};
-    const phone = response.Phone || '';
+
+    function formatPhone(phone) {
+      let p = (phone || '').trim();
+      if (p.startsWith('0') && p.length === 10) return '254' + p.slice(1);
+      if (p.startsWith('7') && p.length === 9) return '254' + p;
+      if (p.startsWith('+254')) return p.slice(1);
+      if (p.startsWith('254') && p.length === 12) return p;
+      return p;
+    }
+
+    const phone = formatPhone(response.Phone || '');
     const amount = parseInt(response.Amount) || 0;
     const status = response.Status || 'Failed';
     const mpesa_receipt = response.MpesaReceiptNumber || '';
@@ -49,7 +59,9 @@ exports.handler = async (event, context) => {
     if (status === 'Success' && result_code === 0) {
       const spins = getSpinsForAmount(amount);
       if (spins > 0 && phone) {
-        // Upsert user spins
+        // Upsert user row if not exists
+        await supabase.from('users').upsert([{ phone, spins: 0 }], { onConflict: ['phone'] });
+        // Credit spins
         await supabase.rpc('credit_user_spins', { user_phone: phone, spins_to_add: spins });
       }
     }
