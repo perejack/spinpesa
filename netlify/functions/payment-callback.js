@@ -3,7 +3,6 @@ const { supabase } = require('./supabase');
 
 // Helper: Calculate spins based on amount
 function getSpinsForAmount(amount) {
-  if (amount === 10) return 1; // TESTING: 10 KSH = 1 spin
   if (amount === 50) return 3;
   if (amount === 100) return 10;
   if (amount === 200) return 25;
@@ -60,9 +59,11 @@ exports.handler = async (event, context) => {
       const spins = getSpinsForAmount(amount);
       if (spins > 0 && phone) {
         // Upsert user row if not exists
-        await supabase.from('users').upsert([{ phone, spins: 0 }], { onConflict: ['phone'] });
+        const { error: upsertError, data: upsertData } = await supabase.from('users').upsert([{ phone, spins: 0 }], { onConflict: ['phone'] });
+        console.log('Upsert user result:', upsertData, upsertError);
         // Credit spins
-        await supabase.rpc('credit_user_spins', { user_phone: phone, spins_to_add: spins });
+        const { error: creditError, data: creditData } = await supabase.rpc('credit_user_spins', { user_phone: phone, spins_to_add: spins });
+        console.log('Credit spins result:', creditData, creditError);
       }
     }
 

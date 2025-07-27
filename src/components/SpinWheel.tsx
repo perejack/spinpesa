@@ -835,7 +835,7 @@ const SpinWheel = () => {
           ) : state.balance >= 10 ? (
             <span className="flex items-center justify-center gap-3">
               <Zap className="w-5 h-5 sm:w-6 sm:h-6" />
-              SPIN (10 KSH)
+              SPIN (50 KSH)
             </span>
           ) : (
             <span className="flex items-center justify-center gap-3">

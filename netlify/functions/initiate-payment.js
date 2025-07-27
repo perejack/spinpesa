@@ -78,7 +78,7 @@ exports.handler = async (event, context) => {
     }
     
     // Generate a unique reference for this payment
-    const externalReference = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const externalReference = `INV-${Date.now()}-${Math.floor(Math.random() * 5000)}`;
     
     // Define the callback URL - use Netlify function URL
     const callbackUrl = `${process.env.URL || 'https://your-netlify-site.netlify.app'}/.netlify/functions/payment-callback`;
