@@ -92,8 +92,12 @@ const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose }) => {
       if (response.success) {
         setShowSuccess(true);
         soundManager.play('cash');
-        // Optionally, you can update state on callback confirmation instead
+        // Update phone number and refresh spin balance
         dispatch({ type: 'SET_PHONE_NUMBER', payload: phoneNumber });
+        // Refresh spin balance from Supabase
+        const { getSpinBalance } = await import('../utils/supabaseClient');
+        const updatedBalance = await getSpinBalance(phoneNumber);
+        dispatch({ type: 'ADD_PAID_SPINS', payload: updatedBalance });
       } else {
         errorMsg = response.message || 'Failed to initiate payment.';
       }
