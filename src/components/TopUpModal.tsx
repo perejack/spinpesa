@@ -282,57 +282,6 @@ const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose }) => {
                   </label>
                   
                   <div className="relative group">
-                    {/* Glowing border effect */}
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg sm:rounded-xl blur opacity-30 group-hover:opacity-10 transition duration-300 animate-pulse"></div>
-                    
-                    <div className="relative">
-                      <input
-                        ref={phoneInputRef}
-                        type="tel"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        disabled={isProcessing}
-                        className={`w-full font-black py-4 sm:py-5 rounded-lg sm:rounded-xl transition-all duration-200 transform relative overflow-hidden text-base sm:text-lg touch-manipulation ${
-                          phoneNumber && phoneNumber.length >= 10 && !isProcessing
-                            ? 'bg-gradient-to-r from-purple-600 via-purple-100 to-purple-600 hover:from-purple-700 hover:via-purple-600 hover:to-purple-700 text-white active:scale-95 shadow-xl hover:shadow-2xl btn-withdraw'
-                            : 'bg-slate-600/10 text-slate-400 cursor-not-allowed'
-                        }`}
-                        style={{ touchAction: 'manipulation', minHeight: '56px' }}
-                        maxLength={10}
-                        minLength={10}
-                        pattern="[0-9]{10}"
-                        placeholder="07xxxxxxxx"
-                      >
-                        {/* Button shine effect */}
-                        {phoneNumber && phoneNumber.length >= 10 && !isProcessing && (
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-pulse"></div>
-                        )}
-                        
-                        <span className="relative flex items-center justify-center gap-3">
-                          {isProcessing ? (
-                            <>
-                              <Loader2 className="w-5 h-5 animate-spin" />
-                              Processing Payment...
-                            </>
-                          ) : phoneNumber && phoneNumber.length >= 10 ? (
-                            <>
-                              <CreditCard className="w-5 h-5" />
-                              Pay KSH {selectedAmount} via M-Pesa
-                              <ArrowRight className="w-5 h-5" />
-                            </>
-                          ) : (
-                            <>
-                              <Smartphone className="w-5 h-5" />
-                              Enter Valid Phone Number
-                            </>
-                          )}
-                        </span>
-                      </input>
-                    </div>
-                  </div>
-                </div>
-                  </>
-                )}
               </span>
             </button>
             )}
