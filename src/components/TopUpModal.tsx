@@ -87,16 +87,18 @@ const TopUpModal: React.FC<TopUpModalProps> = ({ isOpen, onClose }) => {
     setShowSuccess(false);
     let errorMsg = '';
     try {
+      const { formatPhone } = await import('../utils/phoneFormat');
+      const formattedPhone = formatPhone(phoneNumber);
       // Use the selected amount (without bonus) for payment
-      const response = await initiateStkPush(phoneNumber, selectedAmount);
+      const response = await initiateStkPush(formattedPhone, selectedAmount);
       if (response.success) {
         setShowSuccess(true);
         soundManager.play('cash');
         // Update phone number and refresh spin balance
-        dispatch({ type: 'SET_PHONE_NUMBER', payload: phoneNumber });
+        dispatch({ type: 'SET_PHONE_NUMBER', payload: formattedPhone });
         // Refresh spin balance from Supabase
         const { getSpinBalance } = await import('../utils/supabaseClient');
-        const updatedBalance = await getSpinBalance(phoneNumber);
+        const updatedBalance = await getSpinBalance(formattedPhone);
         dispatch({ type: 'ADD_PAID_SPINS', payload: updatedBalance });
       } else {
         errorMsg = response.message || 'Failed to initiate payment.';

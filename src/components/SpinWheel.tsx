@@ -128,7 +128,10 @@ const SpinWheel = () => {
 
   const spinWheel = async (powerOverride?: number) => {
     if (!canSpin() || isAnimating) return;
-    const phoneNumber = state.phoneNumber;
+    let phoneNumber = state.phoneNumber;
+    // Always use formatted phone for backend
+    const { formatPhone } = await import('../utils/phoneFormat');
+    phoneNumber = formatPhone(phoneNumber);
 
     // Check actual Supabase balance for paid spins
     let supabaseSpinBalance = 0;
